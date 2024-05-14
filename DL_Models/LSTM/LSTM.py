@@ -116,4 +116,4 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
         'Forecast Values': forecast_orig.flatten()  # Flatten in case it's not a 1D array
     })
 
-    return test_predictions_df, forecast_orig_df, test_rmse
+    return y_test_orig_df, test_predictions_df, forecast_orig_df, test_rmse

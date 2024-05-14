@@ -5,6 +5,10 @@ import pandas as pd
 import io
 import boto3
 
+s3 = boto3.client('s3', aws_access_key_id=Credentials.aws_access_key_id,
+                  aws_secret_access_key=Credentials.aws_secret_access_key)
+S3_BUCKET_NAME = 'b3ll-curve-model-storage'
+
 
 def read_data_s3(bucket_name, folder_name):
     """Function to read and process data from an S3 bucket folder.
@@ -18,17 +22,13 @@ def read_data_s3(bucket_name, folder_name):
         def custom_date_parser(date_string):
             return pd.to_datetime(date_string, format='%d/%m/%y')
 
-        # Initialize S3 client
-        s3_client = boto3.client('s3', aws_access_key_id=Credentials.aws_access_key_id,
-                                 aws_secret_access_key=Credentials.aws_secret_access_key)
-
         # List files in the specified folder
-        response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=folder_name)
+        response = s3.list_objects_v2(Bucket=bucket_name, Prefix=folder_name)
         files = [item['Key'] for item in response['Contents'] if item['Key'].endswith('.csv')]
 
         all_data = []
         for file_key in files:
-            csv_obj = s3_client.get_object(Bucket=bucket_name, Key=file_key)
+            csv_obj = s3.get_object(Bucket=bucket_name, Key=file_key)
             body = csv_obj['Body']
             data = pd.read_csv(io.BytesIO(body.read()), parse_dates=['Date'], date_parser=custom_date_parser)
             all_data.append(data)
@@ -58,3 +58,7 @@ def read_data_s3(bucket_name, folder_name):
         return date_df
     except Exception as e:
         raise Exception(f"Failed to read data from S3: {e}")
+
+
+def store_models_s3(s3_path, body):
+    s3.put_object(Bucket=S3_BUCKET_NAME, Key=s3_path, Body=body)

@@ -41,4 +41,4 @@ def execute_ets(raw_data, data, forecast_days, hyperparameters):
     plt.tight_layout()
     plt.show()
 
-    return predictions, forecast_next_100_days,rmse
+    return predictions, forecast_next_100_days, rmse

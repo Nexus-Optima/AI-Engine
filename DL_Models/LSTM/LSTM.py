@@ -52,20 +52,19 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     train_mse = np.mean((train_predictions_orig - y_train_orig) ** 2)
     # test_rmse = np.sqrt(np.mean((test_predictions_orig - y_test_orig) ** 2))
     test_rmse = np.sqrt(mean_squared_error(y_test_orig, test_predictions_orig))
-    raw_data.reset_index(inplace=True)
-    raw_data = process_data(raw_data)
+  #  raw_data.reset_index(inplace=True)
+  #  raw_data = process_data(raw_data)
     future_dates = [raw_data.index[-1] + pd.Timedelta(days=i) for i in range(1, forecast + 1)]
     future_data = pd.DataFrame(index=future_dates)
     future_data.index.name = 'Date'
     combined_data = pd.concat([raw_data, future_data])
-    combined_data = combined_data.reset_index()
-    combined_data = process_data_lagged(combined_data, forecast)
+    #combined_data = combined_data.reset_index()
+    #combined_data = process_data_lagged_weekly(combined_data, forecast)
     combined_data = combined_data.last('4Y')
     combined_data = combined_data.reset_index()
-    combined_data = combined_data[combined_data['Date'].dt.dayofweek < 5]
+    #combined_data = combined_data[combined_data['Date'].dt.dayofweek < 5]
     dates = combined_data['Date']
     combined_data.drop(columns=['Date'], inplace=True)
-
     combined_data = combined_data[data.columns]
     scaled_forecast_data, future_data_min, future_data_max = lstm_utils.min_max_scaler(combined_data.values)
     forecast_values = []

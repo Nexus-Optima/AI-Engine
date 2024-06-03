@@ -7,10 +7,44 @@ def process_data(data):
     data.sort_index(inplace=True)
     return data
 
+def process_data_weekly(data):
+    data['Date'] = pd.to_datetime(data['Date'], format='%d/%m/%y')
+    data.set_index('Date', inplace=True)
+    data.sort_index(inplace=True)
+
+    def resample_weekly(group):
+        result = {}
+        for column in group.columns:
+            if column == 'Output':
+                result[column] = group[column].mean()
+            else:
+                result[f'avg_{column}'] = group[column].mean()
+        return pd.Series(result)
+    data = data.resample('W').apply(resample_weekly)
+    return data
+
+
 
 def process_data_lagged(data, forecast_days):
     data = process_data(data)
     lags = [1, 5, 7, 15, 30]
+
+    for col in data.columns:
+        if "_lag" in col:
+            data.drop(col, axis=1, inplace=True)
+
+    for col in data.columns:
+        for lag in lags:
+            if lag >= forecast_days:
+                lag_col_name = f"{col}_lag{lag}"
+                data[lag_col_name] = data[col].shift(lag)
+
+    data.dropna(inplace=True)
+    return data
+
+def process_data_lagged_weekly(data, forecast_days):
+    data = process_data_weekly(data)
+    lags = [1,3, 5, 7, 15, 30]
 
     for col in data.columns:
         if "_lag" in col:

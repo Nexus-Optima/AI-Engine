@@ -38,28 +38,28 @@ def forecast_pipeline(commodity_name):
 
     # Ensure that you're referencing actual function objects here:
     models = {
-        # 'LSTM': {
-        #     'func': execute_lstm,  # This should directly reference the function, not a string or anything else.
-        #     'model_data':{
-        #         'initial_data': processed_data,
-        #         'final_data': features_dataset
-        #     },
-        #     'params': {
-        #         'forecast': prms.FORECASTING_DAYS,
-        #         'hyperparameters': prms.lstm_parameters_4Y_30D
-        #     }
-        # },
-        # 'LSTM_Weekly': {
-        #     'func': execute_lstm,  # This should directly reference the function, not a string or anything else.
-        #     'model_data': {
-        #         'initial_data': processed_data_weekly,
-        #         'final_data': features_dataset_weekly
-        #     },
-        #     'params': {
-        #         'forecast': prms.FORECASTING_WEEKS,
-        #         'hyperparameters': prms.lstm_parameters_4Y_30D
-        #     }
-        # },
+        'LSTM': {
+            'func': execute_lstm,  # This should directly reference the function, not a string or anything else.
+            'model_data':{
+                'initial_data': processed_data,
+                'final_data': features_dataset
+            },
+            'params': {
+                'forecast': prms.FORECASTING_DAYS,
+                'hyperparameters': prms.lstm_parameters_4Y_30D
+            }
+        },
+        'LSTM_Weekly': {
+            'func': execute_lstm,  # This should directly reference the function, not a string or anything else.
+            'model_data': {
+                'initial_data': processed_data_weekly,
+                'final_data': features_dataset_weekly
+            },
+            'params': {
+                'forecast': prms.FORECASTING_WEEKS,
+                'hyperparameters': prms.lstm_parameters_4Y_30D
+            }
+        },
         # 'ETS': {
         #     'func': execute_ets,  # This should directly reference the function, not a string or anything else.
         #     'params': {
@@ -165,6 +165,3 @@ def execute_model(model_func, raw_data, processed_data, forecast, hyperparameter
     """
     actual_values, predictions, forecast_results, accuracy = model_func(raw_data, processed_data, forecast, hyperparameters)
     return actual_values, predictions, forecast_results, accuracy
-
-
-forecast_pipeline("cotton")

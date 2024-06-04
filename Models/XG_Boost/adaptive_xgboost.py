@@ -151,6 +151,5 @@ def execute_adaptive_xgboost(raw_data, subset_data, forecast_days, hyperparams):
 
     plot_graph(past_dates, actual_values, predictions, future_data['Output'].tolist(), future_dates_list)
 
-    print(future_data['Output'])
 
     return actual_values, predictions, future_data['Output'], XGB_rmse

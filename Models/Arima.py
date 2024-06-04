@@ -16,7 +16,6 @@ def evaluate_arima_model(train, test, order):
 
 def execute_arima(raw_data, data, forecast_days, hyperparameters):
     data.sort_index(inplace=True)
-    data.head()
     train_size = int(0.8 * len(data))
     train, test = data['Output'][:train_size], data['Output'][train_size:]
     best_rmse = float('inf')
@@ -55,4 +54,4 @@ def execute_arima(raw_data, data, forecast_days, hyperparameters):
     plt.tight_layout()
     plt.show()
 
-    return best_predictions, forecast, best_rmse
+    return data, best_predictions, forecast, best_rmse

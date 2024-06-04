@@ -15,3 +15,5 @@ lstm_parameters_4Y_7D = {'lr': 0.01921919354476147, 'num_layers': 1, 'hidden_siz
 
 FORECASTING_DAYS = 15
 
+FORECASTING_WEEKS = 5
+

@@ -165,9 +165,9 @@ def determine_forecast_path(commodity_name, model_name):
     Determine the storage path for forecasts based on the model name.
     """
     if "Weekly" in model_name:
-        return f"{cts.Commodities.FORECAST_STORAGE}/{commodity_name}/macro/{model_name}_forecast.json"
+        return f"{cts.Commodities.FORECAST_STORAGE}/{commodity_name}/macro"
     else:
-        return f"{cts.Commodities.FORECAST_STORAGE}/{commodity_name}/micro/{model_name}_forecast.json"
+        return f"{cts.Commodities.FORECAST_STORAGE}/{commodity_name}/micro"
 
 
 def execute_model(model_func, raw_data, processed_data, forecast, hyperparameters):

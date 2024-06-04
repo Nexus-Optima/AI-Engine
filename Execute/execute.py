@@ -11,7 +11,6 @@ from Database.s3_operations import read_data_s3, store_models_s3
 # Utilities for data processing.
 from Utils.process_data import process_data_lagged, process_data_lagged_weekly
 
-
 # Importing different modeling approaches.
 from Models.XG_Boost.adaptive_xgboost import execute_adaptive_xgboost
 from Models.ETS import execute_ets
@@ -19,6 +18,7 @@ from Models.Arima import execute_arima
 from DL_Models.LSTM.LSTM import execute_lstm
 
 load_dotenv()
+
 
 # Boto3 clients
 
@@ -40,7 +40,7 @@ def forecast_pipeline(commodity_name):
     models = {
         'LSTM': {
             'func': execute_lstm,  # This should directly reference the function, not a string or anything else.
-            'model_data':{
+            'model_data': {
                 'initial_data': processed_data,
                 'final_data': features_dataset
             },
@@ -68,32 +68,32 @@ def forecast_pipeline(commodity_name):
         #     }
         #     # Make sure other models are added here similarly.
         # },
-        'XGBoost': {
-            'func': execute_adaptive_xgboost,
-            # This should directly reference the function, not a string or anything else.
-            'model_data': {
-                'initial_data': processed_data,
-                'final_data': features_dataset
-            },
-            'params': {
-                'forecast': prms.FORECASTING_DAYS,
-                'hyperparameters': prms.xgboost_params_2Y
-            }
-            # Make sure other models are added here similarly.
-        },
-        'XGBoost_Weekly': {
-            'func': execute_adaptive_xgboost,
-            # This should directly reference the function, not a string or anything else.
-            'model_data': {
-                'initial_data': processed_data_weekly,
-                'final_data': features_dataset_weekly
-            },
-            'params': {
-                'forecast': prms.FORECASTING_WEEKS,
-                'hyperparameters': prms.xgboost_params_2Y
-            }
-            # Make sure other models are added here similarly.
-        }
+        # 'XGBoost': {
+        #     'func': execute_adaptive_xgboost,
+        #     # This should directly reference the function, not a string or anything else.
+        #     'model_data': {
+        #         'initial_data': processed_data,
+        #         'final_data': features_dataset
+        #     },
+        #     'params': {
+        #         'forecast': prms.FORECASTING_DAYS,
+        #         'hyperparameters': prms.xgboost_params_2Y
+        #     }
+        #     # Make sure other models are added here similarly.
+        # },
+        # 'XGBoost_Weekly': {
+        #     'func': execute_adaptive_xgboost,
+        #     # This should directly reference the function, not a string or anything else.
+        #     'model_data': {
+        #         'initial_data': processed_data_weekly,
+        #         'final_data': features_dataset_weekly
+        #     },
+        #     'params': {
+        #         'forecast': prms.FORECASTING_WEEKS,
+        #         'hyperparameters': prms.xgboost_params_2Y
+        #     }
+        #     # Make sure other models are added here similarly.
+        # }
         # 'ARIMA': {
         #     'func': execute_arima,
         #     # This should directly reference the function, not a string or anything else.
@@ -118,8 +118,8 @@ def forecast_pipeline(commodity_name):
         #         'forecast': prms.FORECASTING_WEEKS,
         #         'hyperparameters': prms.xgboost_params_2Y
         #     }
-            # Make sure other models are added here similarly.
-        #}
+        # Make sure other models are added here similarly.
+        # }
         # 'LGBM': {
         #     'func': execute_LGBM,  # This should directly reference the function, not a string or anything else.
         #     'params': {
@@ -140,7 +140,8 @@ def forecast_pipeline(commodity_name):
         model_data = model_info['model_data']
         params = model_info['params']
         actual_values, predictions, forecast_outputs, accuracy = execute_model(
-            model_func, model_data['initial_data'], model_data['final_data'], params['forecast'], params['hyperparameters']
+            model_func, model_data['initial_data'], model_data['final_data'], params['forecast'],
+            params['hyperparameters']
         )
         model_details = {
             "model_name": model_name,
@@ -151,11 +152,22 @@ def forecast_pipeline(commodity_name):
         all_model_details.append(model_details)
         store_model_details_in_dynamoDB(model_name, accuracy, params['hyperparameters'],
                                         list(model_data['final_data'].columns), s3_path)
-        # datasets = {"actual_values": actual_values, "forecast_values": forecast_outputs}
-        # store_forecast(cts.Commodities.FORECAST_STORAGE, "cotton", datasets)
+        forecast_path = determine_forecast_path(commodity_name, model_name)
+        datasets = {"actual_values": actual_values, "forecast_values": forecast_outputs}
+        store_forecast(forecast_path, datasets)
 
     # Store all details in a single S3 file
     store_models_s3(s3_path, json.dumps(all_model_details))
+
+
+def determine_forecast_path(commodity_name, model_name):
+    """
+    Determine the storage path for forecasts based on the model name.
+    """
+    if "Weekly" in model_name:
+        return f"{cts.Commodities.FORECAST_STORAGE}/{commodity_name}/macro/{model_name}_forecast.json"
+    else:
+        return f"{cts.Commodities.FORECAST_STORAGE}/{commodity_name}/micro/{model_name}_forecast.json"
 
 
 def execute_model(model_func, raw_data, processed_data, forecast, hyperparameters):
@@ -163,5 +175,6 @@ def execute_model(model_func, raw_data, processed_data, forecast, hyperparameter
     General function to execute any model with the given data, forecast period, and hyperparameters.
     Assumes model_func is a callable that matches this signature.
     """
-    actual_values, predictions, forecast_results, accuracy = model_func(raw_data, processed_data, forecast, hyperparameters)
+    actual_values, predictions, forecast_results, accuracy = model_func(raw_data, processed_data, forecast,
+                                                                        hyperparameters)
     return actual_values, predictions, forecast_results, accuracy

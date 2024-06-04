@@ -38,28 +38,28 @@ def forecast_pipeline(commodity_name):
 
     # Ensure that you're referencing actual function objects here:
     models = {
-        'LSTM': {
-            'func': execute_lstm,  # This should directly reference the function, not a string or anything else.
-            'model_data':{
-                'initial_data': processed_data,
-                'final_data': features_dataset
-            },
-            'params': {
-                'forecast': prms.FORECASTING_DAYS,
-                'hyperparameters': prms.lstm_parameters_4Y_30D
-            }
-        },
-        'LSTM_Weekly': {
-            'func': execute_lstm,  # This should directly reference the function, not a string or anything else.
-            'model_data': {
-                'initial_data': processed_data_weekly,
-                'final_data': features_dataset_weekly
-            },
-            'params': {
-                'forecast': prms.FORECASTING_WEEKS,
-                'hyperparameters': prms.lstm_parameters_4Y_30D
-            }
-        },
+        # 'LSTM': {
+        #     'func': execute_lstm,  # This should directly reference the function, not a string or anything else.
+        #     'model_data':{
+        #         'initial_data': processed_data,
+        #         'final_data': features_dataset
+        #     },
+        #     'params': {
+        #         'forecast': prms.FORECASTING_DAYS,
+        #         'hyperparameters': prms.lstm_parameters_4Y_30D
+        #     }
+        # },
+        # 'LSTM_Weekly': {
+        #     'func': execute_lstm,  # This should directly reference the function, not a string or anything else.
+        #     'model_data': {
+        #         'initial_data': processed_data_weekly,
+        #         'final_data': features_dataset_weekly
+        #     },
+        #     'params': {
+        #         'forecast': prms.FORECASTING_WEEKS,
+        #         'hyperparameters': prms.lstm_parameters_4Y_30D
+        #     }
+        # },
         # 'ETS': {
         #     'func': execute_ets,  # This should directly reference the function, not a string or anything else.
         #     'params': {
@@ -68,32 +68,32 @@ def forecast_pipeline(commodity_name):
         #     }
         #     # Make sure other models are added here similarly.
         # },
-        # 'XGBoost': {
-        #     'func': execute_adaptive_xgboost,
-        #     # This should directly reference the function, not a string or anything else.
-        #     'model_data': {
-        #         'initial_data': processed_data,
-        #         'final_data': features_dataset
-        #     },
-        #     'params': {
-        #         'forecast': prms.FORECASTING_DAYS,
-        #         'hyperparameters': prms.xgboost_params_2Y
-        #     }
-        #     # Make sure other models are added here similarly.
-        # },
-        # 'XGBoost_Weekly': {
-        #     'func': execute_adaptive_xgboost,
-        #     # This should directly reference the function, not a string or anything else.
-        #     'model_data': {
-        #         'initial_data': processed_data_weekly,
-        #         'final_data': features_dataset_weekly
-        #     },
-        #     'params': {
-        #         'forecast': prms.FORECASTING_WEEKS,
-        #         'hyperparameters': prms.xgboost_params_2Y
-        #     }
-        #     # Make sure other models are added here similarly.
-        # }
+        'XGBoost': {
+            'func': execute_adaptive_xgboost,
+            # This should directly reference the function, not a string or anything else.
+            'model_data': {
+                'initial_data': processed_data,
+                'final_data': features_dataset
+            },
+            'params': {
+                'forecast': prms.FORECASTING_DAYS,
+                'hyperparameters': prms.xgboost_params_2Y
+            }
+            # Make sure other models are added here similarly.
+        },
+        'XGBoost_Weekly': {
+            'func': execute_adaptive_xgboost,
+            # This should directly reference the function, not a string or anything else.
+            'model_data': {
+                'initial_data': processed_data_weekly,
+                'final_data': features_dataset_weekly
+            },
+            'params': {
+                'forecast': prms.FORECASTING_WEEKS,
+                'hyperparameters': prms.xgboost_params_2Y
+            }
+            # Make sure other models are added here similarly.
+        }
         # 'ARIMA': {
         #     'func': execute_arima,
         #     # This should directly reference the function, not a string or anything else.
@@ -146,11 +146,11 @@ def forecast_pipeline(commodity_name):
             "model_name": model_name,
             "accuracy": accuracy,
             "hyper_parameters": params['hyperparameters'],
-            "input_columns": model_data['final_data'].columns,
+            "input_columns": list(model_data['final_data'].columns),
         }
         all_model_details.append(model_details)
-        store_model_details_in_dynamoDB(model_name, accuracy, params['hyperparameters'], model_data['final_data'].columns,
-                                        s3_path)
+        store_model_details_in_dynamoDB(model_name, accuracy, params['hyperparameters'],
+                                        list(model_data['final_data'].columns), s3_path)
         # datasets = {"actual_values": actual_values, "forecast_values": forecast_outputs}
         # store_forecast(cts.Commodities.FORECAST_STORAGE, "cotton", datasets)
 
@@ -166,3 +166,5 @@ def execute_model(model_func, raw_data, processed_data, forecast, hyperparameter
     actual_values, predictions, forecast_results, accuracy = model_func(raw_data, processed_data, forecast, hyperparameters)
     return actual_values, predictions, forecast_results, accuracy
 
+
+forecast_pipeline("cotton")

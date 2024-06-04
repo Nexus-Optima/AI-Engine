@@ -178,7 +178,6 @@ def execute_model(model_func, raw_data, processed_data, forecast, hyperparameter
     """
     actual_values, predictions, forecast_results, accuracy = model_func(raw_data, processed_data, forecast,
                                                                         hyperparameters)
-    print(forecast_results)
     return actual_values, predictions, forecast_results, accuracy
 
-#forecast_pipeline('cotton')
+# forecast_pipeline('cotton')

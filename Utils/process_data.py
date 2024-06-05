@@ -20,31 +20,14 @@ def process_data_weekly(data):
             else:
                 result[f'avg_{column}'] = group[column].mean()
         return pd.Series(result)
-    data = data.resample('W').apply(resample_weekly)
+    data = data.resample('W').apply(resample_weekly).reset_index()
     return data
 
 
 
 def process_data_lagged(data, forecast_days):
     data = process_data(data)
-    lags = [1, 5, 7, 15, 30]
-
-    for col in data.columns:
-        if "_lag" in col:
-            data.drop(col, axis=1, inplace=True)
-
-    for col in data.columns:
-        for lag in lags:
-            if lag >= forecast_days:
-                lag_col_name = f"{col}_lag{lag}"
-                data[lag_col_name] = data[col].shift(lag)
-
-    data.dropna(inplace=True)
-    return data
-
-def process_data_lagged_weekly(data, forecast_days):
-    data = process_data_weekly(data)
-    lags = [1,3, 5, 7, 15, 30]
+    lags = [1, 3, 5, 7, 15, 30]
 
     for col in data.columns:
         if "_lag" in col:

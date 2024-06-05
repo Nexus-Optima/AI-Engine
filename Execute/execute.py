@@ -9,7 +9,7 @@ from Database.dynamoDB_operations import store_model_details_in_dynamoDB, store_
 from Database.s3_operations import read_data_s3, store_models_s3
 
 # Utilities for data processing.
-from Utils.process_data import process_data_lagged, process_data_lagged_weekly
+from Utils.process_data import process_data_lagged, process_data_weekly
 
 # Importing different modeling approaches.
 from Models.XG_Boost.adaptive_xgboost import execute_adaptive_xgboost
@@ -29,10 +29,11 @@ def forecast_pipeline(commodity_name):
     """
     read_df = read_data_s3(cts.Commodities.COMMODITIES, commodity_name)
     read_df_weekly = read_data_s3(cts.Commodities.COMMODITIES, commodity_name)
+    processed_data_weekly = process_data_weekly(read_df_weekly)
     processed_data = process_data_lagged(read_df, prms.FORECASTING_DAYS)
-    processed_data_weekly = process_data_lagged_weekly(read_df_weekly, prms.FORECASTING_WEEKS)
+    processed_data_weekly_lagged = process_data_lagged(processed_data_weekly, prms.FORECASTING_WEEKS)
     features_dataset = create_features_dataset(processed_data.copy())
-    features_dataset_weekly = create_features_dataset(processed_data_weekly.copy())
+    features_dataset_weekly = create_features_dataset(processed_data_weekly_lagged.copy())
     features_dataset = features_dataset.last('4Y')
     features_dataset_weekly = features_dataset_weekly.last('4Y')
 
@@ -41,7 +42,7 @@ def forecast_pipeline(commodity_name):
         'LSTM': {
             'func': execute_lstm,  # This should directly reference the function, not a string or anything else.
             'model_data': {
-                'initial_data': processed_data,
+                'initial_data': read_df,
                 'final_data': features_dataset
             },
             'params': {
@@ -178,3 +179,5 @@ def execute_model(model_func, raw_data, processed_data, forecast, hyperparameter
     actual_values, predictions, forecast_results, accuracy = model_func(raw_data, processed_data, forecast,
                                                                         hyperparameters)
     return actual_values, predictions, forecast_results, accuracy
+
+# forecast_pipeline('cotton')

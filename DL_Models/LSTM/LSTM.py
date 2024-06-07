@@ -62,10 +62,9 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     combined_data = process_data_lagged(combined_data, forecast)
     combined_data = combined_data.last('4Y')
     combined_data = combined_data.reset_index()
-    combined_data = combined_data[combined_data['Date'].dt.dayofweek < 5]
+    #combined_data = combined_data[combined_data['Date'].dt.dayofweek < 5]
     dates = combined_data['Date']
     combined_data.drop(columns=['Date'], inplace=True)
-
     combined_data = combined_data[data.columns]
     scaled_forecast_data, future_data_min, future_data_max = lstm_utils.min_max_scaler(combined_data.values)
     forecast_values = []

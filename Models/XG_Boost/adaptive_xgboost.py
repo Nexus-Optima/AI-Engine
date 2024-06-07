@@ -149,8 +149,20 @@ def execute_adaptive_xgboost(raw_data, subset_data, forecast_days, hyperparams):
     past_dates = subset_data.index[window_size:window_size + len(predictions)]
     future_dates_list = future_data.index.tolist()
 
+    test_predictions_df = pd.DataFrame({
+        'Date': past_dates,
+        'Test Predictions': predictions  # Flatten in case it's not a 1D array
+    })
+
     plot_graph(past_dates, actual_values, predictions, future_data['Output'].tolist(), future_dates_list)
+    forecast_orig_df = pd.DataFrame({
+        'Date': future_dates_list,
+        'Forecast Values': future_data['Output'].tolist()  # Flatten in case it's not a 1D array
+    })
 
-    print(future_data['Output'])
+    actual_values_df = pd.DataFrame({
+        'Date': past_dates,
+        'Actual Values': actual_values  # Flatten in case it's not a 1D array
+    })
 
-    return predictions, future_data['Output'], XGB_rmse
+    return actual_values_df, test_predictions_df, forecast_orig_df, XGB_rmse

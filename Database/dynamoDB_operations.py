@@ -45,23 +45,24 @@ def store_model_details_in_dynamoDB(model_name, accuracy, hyper_parameters, inpu
         print(f"Failed to store or update model details in DynamoDB: {e}")
 
 
-def store_forecast(bucket_name, folder_name, datasets):
+def store_forecast(forecast_path, datasets):
     """
     Stores multiple datasets in S3 as JSON files.
 
     Parameters:
-    - bucket_name: Name of the S3 bucket.
-    - folder_name: Folder path within the S3 bucket.
-    - datasets: A dictionary where keys are filenames and values are pandas DataFrames.
+    - full_path: The full S3 path including bucket, folder, and filename.
+    - datasets: A dictionary where keys are identifiers and values are pandas DataFrames.
     """
     try:
         s3_client = boto3.client('s3', aws_access_key_id=Credentials.aws_access_key_id,
                                  aws_secret_access_key=Credentials.aws_secret_access_key)
 
-        for filename, df in datasets.items():
+        for identifier, df in datasets.items():
             json_data = df.to_json(orient='records', date_format='iso')
-            file_path = f"{folder_name}/{filename}.json"
-            s3_client.put_object(Bucket=bucket_name, Key=file_path, Body=json_data)
-            print(f"Uploaded {filename} to s3://{bucket_name}/{file_path}")
+            # Adjust the full path for each dataset
+            file_path = f"{forecast_path}/{identifier}.json"
+            bucket_name, key = file_path.split('/', 1)
+            s3_client.put_object(Bucket=bucket_name, Key=key, Body=json_data)
+            print(f"Uploaded {identifier} to s3://{bucket_name}/{key}")
     except Exception as e:
         raise Exception(f"Failed to store forecast: {e}")

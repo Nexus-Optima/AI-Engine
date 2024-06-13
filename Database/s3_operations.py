@@ -9,7 +9,6 @@ s3 = boto3.client('s3', aws_access_key_id=Credentials.aws_access_key_id,
                   aws_secret_access_key=Credentials.aws_secret_access_key)
 S3_BUCKET_NAME = 'b3ll-curve-model-storage'
 
-
 def read_data_s3(bucket_name, folder_name):
     """Function to read and process data from an S3 bucket folder.
 
@@ -62,3 +61,19 @@ def read_data_s3(bucket_name, folder_name):
 
 def store_models_s3(s3_path, body):
     s3.put_object(Bucket=S3_BUCKET_NAME, Key=s3_path, Body=body)
+
+def read_raw_data_from_s3(bucket_name, s3_key):
+    try:
+        obj = s3.get_object(Bucket=bucket_name, Key=s3_key)
+        df = pd.read_csv(obj['Body'])
+        return df
+    except Exception as e:
+        print(f"Error reading data from S3: {e}")
+        return None
+
+def upload_converted_data_to_s3(data, bucket_name, s3_key):
+    try:
+        s3.put_object(Bucket=bucket_name, Key=s3_key, Body=data)
+        print(f"Data uploaded successfully to S3: {s3_key}")
+    except Exception as e:
+        print(f"Error uploading data to S3: {e}")

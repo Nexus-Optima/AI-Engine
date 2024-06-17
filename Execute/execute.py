@@ -140,25 +140,28 @@ def forecast_pipeline(commodity_name):
         model_func = model_info['func']
         model_data = model_info['model_data']
         params = model_info['params']
-        actual_values, predictions, forecast_outputs, accuracy = execute_model(
-            model_func, model_data['initial_data'], model_data['final_data'], params['forecast'],
-            params['hyperparameters']
-        )
-        model_details = {
-            "model_name": model_name,
-            "accuracy": accuracy,
-            "hyper_parameters": params['hyperparameters'],
-            "input_columns": list(model_data['final_data'].columns),
-        }
-        all_model_details.append(model_details)
-        store_model_details_in_dynamoDB(model_name, accuracy, params['hyperparameters'],
-                                        list(model_data['final_data'].columns), s3_path)
-        forecast_path = determine_forecast_path(commodity_name, model_name)
-        datasets = {"actual_values": actual_values, "forecast_values": forecast_outputs}
-        store_forecast(forecast_path, datasets)
+        for i in range(0,len(params['forecast'])):
 
-    # Store all details in a single S3 file
-    store_models_s3(s3_path, json.dumps(all_model_details))
+            actual_values, predictions, forecast_outputs, accuracy = execute_model(
+                model_func, model_data['initial_data'], model_data['final_data'], params['forecast'][i],
+                params['hyperparameters']
+
+            )
+            model_details = {
+                "model_name": f"{model_name}_4Y_{params['forecast'][i]}",
+                "accuracy": accuracy,
+                "hyper_parameters": params['hyperparameters'],
+                "input_columns": list(model_data['final_data'].columns),
+            }
+            all_model_details.append(model_details)
+            store_model_details_in_dynamoDB(model_name, accuracy, params['hyperparameters'],
+                                            list(model_data['final_data'].columns), s3_path)
+            forecast_path = determine_forecast_path(commodity_name, model_name)
+            datasets = {"actual_values": actual_values, "forecast_values": forecast_outputs}
+            store_forecast(forecast_path, datasets)
+
+        # Store all details in a single S3 file
+        store_models_s3(s3_path, json.dumps(all_model_details))
 
 
 def determine_forecast_path(commodity_name, model_name):

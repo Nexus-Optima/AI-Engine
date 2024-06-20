@@ -5,7 +5,7 @@ import pandas as pd
 import io
 import boto3
 
-s3 = boto3.client('s3', aws_access_key_id=Credentials.aws_access_key_id,
+s3 = boto3.client('s3',aws_access_key_id=Credentials.aws_access_key_id,
                   aws_secret_access_key=Credentials.aws_secret_access_key)
 S3_BUCKET_NAME = 'b3ll-curve-model-storage'
 

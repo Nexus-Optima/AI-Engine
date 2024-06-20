@@ -30,7 +30,7 @@ def hyperparameter():
         data = request.json
         commodity_name = data.get('commodity_name')
         tuning(commodity_name)
-        return jsonify({"message": "Forecasting started for " + commodity_name}), 202
+        return jsonify({"message": "Hyperparameters"}), 202
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

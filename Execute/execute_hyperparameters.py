@@ -86,4 +86,4 @@ def upload_data_to_s3(data, bucket_name, s3_key):
         print(f"Error uploading data to S3: {e}")
 
 
-tuning('cotton')
+# tuning('cotton')

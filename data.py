@@ -1,5 +1,6 @@
 from Database.s3_operations import read_raw_data_from_s3, upload_converted_data_to_s3
 from Utils.Data_operations import clean_data, left_join_and_adjust_prices
+from Constants.url import Urls
 import Constants.constants as cts
 import pandas as pd
 import io
@@ -44,7 +45,6 @@ def fetch_data():
         save_data_to_s3(commodity_name, brazil_convert_data, "Conversion", "Convert")
 
         spot_price_data = fetch_data_spot_price(start_date, end_date)
-        print(spot_price_data)
         save_data_to_s3(commodity_name, spot_price_data, "Spot_Prices", "Spot_price_data")
 
         data_conversion(commodity_name)
@@ -54,9 +54,8 @@ def fetch_data():
         return jsonify({"error": str(e)}), 500
 
 
-def fetch_data_china(start_date, end_date):
-    url = "https://www.investing.com/commodities/zce-cotton-no.1-futures-historical-data"
-    response=requests.get(url)
+def fetch_historical_data(url, start_date, end_date):
+    response = requests.get(url)
     soup = BeautifulSoup(response.content, 'html.parser')
     table = soup.find('table', class_='freeze-column-w-1 w-full overflow-x-auto text-xs leading-4')
     if not table:
@@ -88,150 +87,28 @@ def fetch_data_china(start_date, end_date):
 
     df = pd.DataFrame(data, columns=['Date', 'Price', 'Open', 'High', 'Low', 'Volume', 'Chg%'])
     return df
+
+def fetch_data_china(start_date, end_date):
+    url = Urls.CHINA
+    return fetch_historical_data(url, start_date, end_date)
 
 def fetch_data_china_convert(start_date, end_date):
-    url = "https://www.investing.com/currencies/cny-inr-historical-data"
-    response=requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    table = soup.find('table', class_='freeze-column-w-1 w-full overflow-x-auto text-xs leading-4')
-    if not table:
-        raise Exception("No historical data table found on the page")
-
-    table_rows = table.find_all('tr')
-
-    if not table_rows:
-        raise Exception("No table rows found in the historical data table")
-
-    data = []
-    for row in table_rows[1:]:
-        columns = row.find_all('td')
-        if len(columns) == 7:
-            date_str = columns[0].text.strip()
-            date = datetime.strptime(date_str, '%m/%d/%Y')
-            price = float(columns[1].text.replace(',', ''))
-            open_ = float(columns[2].text.replace(',', ''))
-            high = float(columns[3].text.replace(',', ''))
-            low = float(columns[4].text.replace(',', ''))
-            vol = columns[5].text.strip()
-            change = columns[6].text.strip()
-
-            if start_date <= date <= end_date:
-                data.append([date, price, open_, high, low, vol, change])
-
-    if not data:
-        raise Exception("No data points found within the specified date range")
-
-    df = pd.DataFrame(data, columns=['Date', 'Price', 'Open', 'High', 'Low', 'Volume', 'Chg%'])
-    return df
-
+    url = Urls.CHINA_CONVERT
+    return fetch_historical_data(url, start_date, end_date)
 
 def fetch_data_usa(start_date, end_date):
-    url = "https://www.investing.com/commodities/us-cotton-no.2-historical-data"
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    table = soup.find('table', class_='freeze-column-w-1 w-full overflow-x-auto text-xs leading-4')
-    if not table:
-        raise Exception("No historical data table found on the page")
-
-    table_rows = table.find_all('tr')
-
-    if not table_rows:
-        raise Exception("No table rows found in the historical data table")
-
-    data = []
-    for row in table_rows[1:]:
-        columns = row.find_all('td')
-        if len(columns) == 7:
-            date_str = columns[0].text.strip()
-            date = datetime.strptime(date_str, '%m/%d/%Y')
-            price = float(columns[1].text.replace(',', ''))
-            open_ = float(columns[2].text.replace(',', ''))
-            high = float(columns[3].text.replace(',', ''))
-            low = float(columns[4].text.replace(',', ''))
-            vol = columns[5].text.strip()
-            change = columns[6].text.strip()
-
-            if start_date <= date <= end_date:
-                data.append([date, price, open_, high, low, vol, change])
-
-    if not data:
-        raise Exception("No data points found within the specified date range")
-
-    df = pd.DataFrame(data, columns=['Date', 'Price', 'Open', 'High', 'Low', 'Volume', 'Chg%'])
-    return df
+    url = Urls.USA
+    return fetch_historical_data(url, start_date, end_date)
 
 def fetch_data_usa_convert(start_date, end_date):
-    url = "https://www.investing.com/currencies/usd-inr-historical-data"
-    response=requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    table = soup.find('table', class_='freeze-column-w-1 w-full overflow-x-auto text-xs leading-4')
-    if not table:
-        raise Exception("No historical data table found on the page")
-
-    table_rows = table.find_all('tr')
-
-    if not table_rows:
-        raise Exception("No table rows found in the historical data table")
-
-    data = []
-    for row in table_rows[1:]:
-        columns = row.find_all('td')
-        if len(columns) == 7:
-            date_str = columns[0].text.strip()
-            date = datetime.strptime(date_str, '%m/%d/%Y')
-            price = float(columns[1].text.replace(',', ''))
-            open_ = float(columns[2].text.replace(',', ''))
-            high = float(columns[3].text.replace(',', ''))
-            low = float(columns[4].text.replace(',', ''))
-            vol = columns[5].text.strip()
-            change = columns[6].text.strip()
-
-            if start_date <= date <= end_date:
-                data.append([date, price, open_, high, low, vol, change])
-
-    if not data:
-        raise Exception("No data points found within the specified date range")
-
-    df = pd.DataFrame(data, columns=['Date', 'Price', 'Open', 'High', 'Low', 'Volume', 'Chg%'])
-    return df
+    url = Urls.USA_CONVERT
+    return fetch_historical_data(url, start_date, end_date)
 
 def fetch_data_india(start_date, end_date):
-    url = "https://www.investing.com/commodities/cotton-historical-data"
-    response = requests.get(url)
-    soup = BeautifulSoup(response.content, 'html.parser')
-    table = soup.find('table', class_='freeze-column-w-1 w-full overflow-x-auto text-xs leading-4')
-    if not table:
-        raise Exception("No historical data table found on the page")
-
-    table_rows = table.find_all('tr')
-
-    if not table_rows:
-        raise Exception("No table rows found in the historical data table")
-
-    data = []
-    for row in table_rows[1:]:
-        columns = row.find_all('td')
-        if len(columns) == 7:
-            date_str = columns[0].text.strip()
-            date = datetime.strptime(date_str, '%m/%d/%Y')
-            price = float(columns[1].text.replace(',', ''))
-            open_ = float(columns[2].text.replace(',', ''))
-            high = float(columns[3].text.replace(',', ''))
-            low = float(columns[4].text.replace(',', ''))
-            vol = columns[5].text.strip()
-            change = columns[6].text.strip()
-
-            if start_date <= date <= end_date:
-                data.append([date, price, open_, high, low, vol, change])
-
-    if not data:
-        raise Exception("No data points found within the specified date range")
-
-    df = pd.DataFrame(data, columns=['Date', 'Price', 'Open', 'High', 'Low', 'Volume', 'Chg%'])
-    return df
-
+    url = Urls.INDIA
+    return fetch_historical_data(url, start_date, end_date)
 def fetch_data_spot_price(start_date, end_date):
-    url = "http://www.gujcot.com/daily-spot-rate-list.php"
+    url = Urls.SPOT_PRICE
     response = requests.get(url)
     soup = BeautifulSoup(response.content, 'html.parser')
     table = soup.find('table', class_='table table-bordered text-right')
@@ -263,7 +140,7 @@ def fetch_data_spot_price(start_date, end_date):
 
 
 def fetch_data_brazil(start_date, end_date):
-    url = "https://www.cepea.esalq.usp.br/en/indicator/cotton.aspx"
+    url = Urls.BRAZIL
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -305,7 +182,7 @@ def fetch_data_brazil(start_date, end_date):
     return df
 
 def fetch_data_brazil_convert(start_date, end_date):
-    url = "https://www.investing.com/currencies/usd-inr-historical-data"
+    url = Urls.BRAZIL_CONVERT
     response = requests.get(url)
     soup = BeautifulSoup(response.content, 'html.parser')
     table = soup.find('table', class_='freeze-column-w-1 w-full overflow-x-auto text-xs leading-4')
@@ -495,4 +372,3 @@ def data_conversion(commodity_name):
     spot_price_conversion(commodity_name)
     cotlook_conversion(commodity_name)
 
-# data_conversion('cotton')

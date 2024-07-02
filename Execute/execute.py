@@ -28,6 +28,13 @@ def forecast_pipeline(commodity_name):
     """
     Run the forecasting pipeline for multiple models.
     """
+
+    forecast_outputs_dict = {
+        "7D": pd.DataFrame(),
+        "15D": pd.DataFrame(),
+        "30D": pd.DataFrame()
+    }
+
     for i in range(0, len(prms.FORECASTING_DAYS)):
 
         read_df = read_data_s3(cts.Commodities.COMMODITIES, commodity_name)
@@ -147,19 +154,32 @@ def forecast_pipeline(commodity_name):
         #             'hyperparameters': prms.lstm_parameters_4Y_30D
         #         }
         #     },
+
+
         for model_name, model_info in models.items():
             model_func = model_info['func']
             model_data = model_info['model_data']
             params = model_info['params']
 
-            print(params['forecast'])
-            print("Hyperparameters",params['hyperparameters'])
-
-
             actual_values, predictions, forecast_outputs, accuracy = execute_model(
                 model_func, model_data['initial_data'], model_data['final_data'], params['forecast'],
                 params['hyperparameters']
             )
+
+            print(type(forecast_outputs))
+
+            if params['forecast'] == 7:
+                forecast_outputs_dict["7D"] = forecast_outputs
+            elif params['forecast'] == 15:
+                forecast_outputs_dict["15D"] = forecast_outputs
+                # Merge the first 7 days from 7D with the remaining 8 days from 15D
+                forecast_outputs_dict["15D"] = pd.concat([forecast_outputs_dict["7D"], forecast_outputs.iloc[7:]])
+            elif params['forecast'] == 30:
+                forecast_outputs_dict["30D"] = forecast_outputs
+                # Append the first 15 days from 15D with the remaining 15 days from 30D
+                forecast_outputs_dict["30D"] = pd.concat([forecast_outputs_dict["15D"], forecast_outputs.iloc[15:]])
+
+
             model_details = {
                 "model_name": f"{model_name}_4Y_{params['forecast']}D",
                 "accuracy": accuracy,
@@ -170,7 +190,14 @@ def forecast_pipeline(commodity_name):
             store_model_details_in_dynamoDB(model_details['model_name'], accuracy, params['hyperparameters'],
                                             list(model_data['final_data'].columns), s3_path)
             forecast_path = determine_forecast_path(commodity_name, model_name, params['forecast'])
-            datasets = {"actual_values": actual_values, "forecast_values": forecast_outputs, "prediction_values":predictions}
+            datasets = {"actual_values": actual_values,
+                        "forecast_values": (
+                            forecast_outputs_dict["7D"] if params['forecast'] == 7 else
+                            forecast_outputs_dict["15D"] if params['forecast'] == 15 else
+                            forecast_outputs_dict["30D"] if params['forecast'] == 30 else
+                            forecast_outputs
+                        ),
+                        "prediction_values":predictions}
             store_forecast(forecast_path, datasets)
 
             # Store all details in a single S3 file

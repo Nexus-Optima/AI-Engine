@@ -44,6 +44,11 @@ def fetch_data():
         save_data_to_s3(commodity_name, brazil_data, "brazil", "Brazil")
         save_data_to_s3(commodity_name, brazil_convert_data, "Conversion", "Convert")
 
+        # cotlook_data = fetch_data_cotlook(start_date, end_date)
+        # cotlook_convert_data = fetch_data_cotlook_convert(start_date, end_date)
+        # save_data_to_s3(commodity_name, cotlook_data, "Cotlook", "Cotlook_data")
+        # save_data_to_s3(commodity_name, cotlook_convert_data, "Conversion", "Convert")
+
         spot_price_data = fetch_data_spot_price(start_date, end_date)
         save_data_to_s3(commodity_name, spot_price_data, "Spot_Prices", "Spot_price_data")
 
@@ -211,6 +216,82 @@ def fetch_data_brazil_convert(start_date, end_date):
     df = pd.DataFrame(data, columns=['Date', 'Price'])
     return df
 
+
+# def fetch_data_cotlook(start_date, end_date):
+#     url = Urls.COTLOOK
+#     headers = {
+#         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+#         'Accept-Language': 'en-US,en;q=0.9',
+#         'Accept-Encoding': 'gzip, deflate, br',
+#         'Connection': 'keep-alive',
+#         'Upgrade-Insecure-Requests': '1',
+#         'Cache-Control': 'max-age=0'
+#     }
+#     response = requests.get(url, headers=headers)
+#     print(response)
+#     if response.status_code != 200:
+#         raise Exception(f"Failed to fetch data from {url}, status code: {response.status_code}")
+#
+#     soup = BeautifulSoup(response.content, 'html.parser')
+#     table = soup.find('table',
+#                       class_='table table-striped table-hover row-border order-column display dataTable no-footer')
+#     print(table)
+#     if not table:
+#         raise Exception("No historical data table found on the page")
+#
+#     table_rows = table.find_all('tr')
+#
+#     if not table_rows:
+#         raise Exception("No table rows found in the historical data table")
+#
+#     data = []
+#     for row in table_rows[1:]:
+#         columns = row.find_all('td')
+#         if len(columns) >= 2:
+#             date_str = columns[0].text.strip()
+#             date = datetime.strptime(date_str, '%m/%d/%Y')
+#             cotlook_a_index = float(columns[1].text.strip())
+#
+#             if start_date <= date <= end_date:
+#                 data.append([date,cotlook_a_index])
+#
+#     if not data:
+#         raise Exception("No data points found within the specified date range")
+#
+#     df = pd.DataFrame(data, columns=['Date', 'Cotlook_A_index'])
+#     return df
+#
+#
+# def fetch_data_cotlook_convert(start_date, end_date):
+#     url = Urls.COTLOOK_CONVERT
+#     response = requests.get(url)
+#     soup = BeautifulSoup(response.content, 'html.parser')
+#     table = soup.find('table', class_='freeze-column-w-1 w-full overflow-x-auto text-xs leading-4')
+#     if not table:
+#         raise Exception("No historical data table found on the page")
+#
+#     table_rows = table.find_all('tr')
+#
+#     if not table_rows:
+#         raise Exception("No table rows found in the historical data table")
+#
+#     data = []
+#     for row in table_rows[1:]:
+#         columns = row.find_all('td')
+#         if len(columns) >= 1:
+#             date_str = columns[0].text.strip()
+#             date = datetime.strptime(date_str, '%m/%d/%Y')
+#             price = float(columns[1].text.replace(',', ''))
+#
+#             if start_date <= date <= end_date:
+#                 data.append([date, price])
+#
+#     if not data:
+#         raise Exception("No data points found within the specified date range")
+#
+#     df = pd.DataFrame(data, columns=['Date', 'Price'])
+#     return df
+
 def save_data_to_s3(commodity_name, df, country, data_type):
     csv_buffer = io.StringIO()
     df.to_csv(csv_buffer, index=False)
@@ -250,13 +331,12 @@ def cotlook_conversion(commodity_name):
     df = read_raw_data_from_s3(S3_READ_BUCKET_NAME, data_key)
     convert_df = read_raw_data_from_s3(S3_READ_BUCKET_NAME, convert_key)
 
-    df = clean_data(df, date_format='%d-%m-%Y')
-    convert_df = clean_data(convert_df, date_format='%Y-%m-%d')
+    df = clean_data(df, date_format='%Y-%m-%d')
+    convert_df = clean_data(convert_df, date_format='%d-%m-%Y')
 
     try:
-        convert_df.rename(columns={'Price': 'Value'}, inplace=True)
-        merged_df = left_join_and_adjust_prices(df, convert_df, ['Date', 'Value'], join_type='inner')
-        merged_df.rename(columns={'Value': 'Cotlook_A_index'}, inplace=True)
+        convert_df.rename(columns={'Price': 'Cotlook_A_index'}, inplace=True)
+        merged_df = left_join_and_adjust_prices(df, convert_df, ['Date', 'Cotlook_A_index'], join_type='inner')
         existing_df = read_raw_data_from_s3(S3_UPLOAD_BUCKET_NAME, output_key)
         updated_df = pd.concat([existing_df, merged_df[['Date', 'Cotlook_A_index']]], ignore_index=True).drop_duplicates(subset='Date', keep='last')
         updated_csv_buffer = io.StringIO()

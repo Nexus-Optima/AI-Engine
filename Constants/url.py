@@ -8,5 +8,6 @@ class Urls:
     SPOT_PRICE = "http://www.gujcot.com/daily-spot-rate-list.php"
     BRAZIL = "https://www.cepea.esalq.usp.br/en/indicator/cotton.aspx"
     BRAZIL_CONVERT="https://www.investing.com/currencies/usd-inr-historical-data"
-
+    # COTLOOK="https://icac.shinyapps.io/ICAC_Open_Data_Dashboaard/"
+    # COTLOOK_CONVERT="https://www.investing.com/currencies/usd-inr-historical-data"
 

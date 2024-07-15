@@ -160,20 +160,36 @@ def forecast_pipeline(commodity_name):
             model_func = model_info['func']
             model_data = model_info['model_data']
             params = model_info['params']
+            accuracy = float('inf')
+            actual_values = None
+            predictions = None
+            forecast_outputs = None
 
-            actual_values, predictions, forecast_outputs, accuracy = execute_model(
-                model_func, model_data['initial_data'], model_data['final_data'], params['forecast'],
-                params['hyperparameters']
-            )
+            for _ in range(5):
+                cur_actual_values, cur_predictions, cur_forecast_outputs, cur_accuracy = execute_model(
+                    model_func, model_data['initial_data'], model_data['final_data'], params['forecast'],
+                    params['hyperparameters']
+                )
 
-            print(type(forecast_outputs))
+                if cur_accuracy < accuracy:
+                    accuracy = cur_accuracy
+                    actual_values = cur_actual_values
+                    predictions = cur_predictions
+                    forecast_outputs = cur_forecast_outputs
+
+            # actual_values, predictions, forecast_outputs, accuracy = execute_model(
+            #     model_func, model_data['initial_data'], model_data['final_data'], params['forecast'],
+            #     params['hyperparameters']
+            # )
 
             if params['forecast'] == 7:
                 forecast_outputs_dict["7D"] = forecast_outputs
+
             elif params['forecast'] == 15:
                 forecast_outputs_dict["15D"] = forecast_outputs
                 # Merge the first 7 days from 7D with the remaining 8 days from 15D
                 forecast_outputs_dict["15D"] = pd.concat([forecast_outputs_dict["7D"], forecast_outputs.iloc[7:]])
+
             elif params['forecast'] == 30:
                 forecast_outputs_dict["30D"] = forecast_outputs
                 # Append the first 15 days from 15D with the remaining 15 days from 30D
@@ -200,7 +216,7 @@ def forecast_pipeline(commodity_name):
                         "prediction_values":predictions}
             store_forecast(forecast_path, datasets)
 
-            # Store all details in a single S3 file
+        # Store all details in a single S3 file
         store_models_s3(s3_path, json.dumps(all_model_details))
 
 

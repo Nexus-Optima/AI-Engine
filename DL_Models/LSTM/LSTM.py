@@ -15,6 +15,9 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     data = data.reset_index()
     data.drop(columns=['Date'], inplace=True)
     data.dropna(inplace=True)
+    for col in data.columns:
+        if "_lag" not in col and col != 'Output':
+            data.drop(col, axis=1, inplace=True)
     scaled_data, data_min, data_max = lstm_utils.min_max_scaler(data.values)
     train_data, test_data = train_test_split(scaled_data, test_size=0.2, shuffle=False)
     look_back = 7
@@ -59,10 +62,14 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     future_data.index.name = 'Date'
     combined_data = pd.concat([raw_data, future_data])
     combined_data = combined_data.reset_index()
+    for col in combined_data.columns:
+        if "_lag" not in col and col != 'Date':
+            value_to_fill = combined_data.iloc[-(forecast+1)][col]
+            combined_data.iloc[-forecast:, combined_data.columns.get_loc(col)] = value_to_fill
     combined_data = process_data_lagged(combined_data, forecast)
     combined_data = combined_data.last('4Y')
     combined_data = combined_data.reset_index()
-    #combined_data = combined_data[combined_data['Date'].dt.dayofweek < 5]
+    combined_data = combined_data[combined_data['Date'].dt.dayofweek < 5]
     dates = combined_data['Date']
     combined_data.drop(columns=['Date'], inplace=True)
     combined_data = combined_data[data.columns]

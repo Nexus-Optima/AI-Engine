@@ -69,7 +69,6 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     combined_data = process_data_lagged(combined_data, forecast)
     combined_data = combined_data.last('4Y')
     combined_data = combined_data.reset_index()
-    combined_data = combined_data[combined_data['Date'].dt.dayofweek < 5]
     dates = combined_data['Date']
     combined_data.drop(columns=['Date'], inplace=True)
     combined_data = combined_data[data.columns]
@@ -103,9 +102,8 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     plt.grid(True)
     plt.tight_layout()
     plt.show()
-
+    dates = dates[:-forecast]
     test_dates = dates[-len(y_test_orig):]  # Adjust this according to how you've split your dates
-
     # Map test predictions with dates
     test_predictions_df = pd.DataFrame({
         'Date': test_dates,
@@ -116,7 +114,7 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
         'Actual Values': y_test_orig.flatten()  # Flatten in case it's not a 1D array
     })
 
-    forecast_dates = pd.date_range(start=test_dates.iloc[-1] + pd.Timedelta(days=1), periods=len(forecast_orig))
+    forecast_dates = pd.date_range(start=test_dates.iloc[-1] + pd.Timedelta(days=1), periods=len(forecast_orig), freq = "B")
     forecast_orig_df = pd.DataFrame({
         'Date': forecast_dates,
         'Forecast Values': forecast_orig.flatten()  # Flatten in case it's not a 1D array

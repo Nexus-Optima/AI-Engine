@@ -20,7 +20,7 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
             data.drop(col, axis=1, inplace=True)
     scaled_data, data_min, data_max = lstm_utils.min_max_scaler(data.values)
     train_data, test_data = train_test_split(scaled_data, test_size=0.2, shuffle=False)
-    look_back = 45
+    look_back = 7
     X_train, y_train = lstm_utils.create_dataset(train_data, look_back)
     X_test, y_test = lstm_utils.create_dataset(test_data, look_back)
 

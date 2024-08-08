@@ -79,7 +79,10 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     for i in range(len(future_data)):
         with torch.no_grad():
             model.eval()
-            prediction = model(torch.FloatTensor(last_data[-look_back:].reshape(1, look_back, -2)))
+            last_elements = last_data[-look_back:]
+            sliced_last_elements = [sublist[1:] for sublist in last_elements]
+            sliced_last_elements = np.array(sliced_last_elements)
+            prediction = model(torch.FloatTensor(sliced_last_elements.reshape(1, look_back, -2)))
             forecast_values.append(prediction.item())
             scaled_forecast_data[i - len(future_data)][0] = prediction.item()
             # remove NaN values to perform proper scaling

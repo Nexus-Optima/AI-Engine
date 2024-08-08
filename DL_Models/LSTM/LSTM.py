@@ -20,7 +20,7 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
             data.drop(col, axis=1, inplace=True)
     scaled_data, data_min, data_max = lstm_utils.min_max_scaler(data.values)
     train_data, test_data = train_test_split(scaled_data, test_size=0.2, shuffle=False)
-    look_back = 7
+    look_back = 45
     X_train, y_train = lstm_utils.create_dataset(train_data, look_back)
     X_test, y_test = lstm_utils.create_dataset(test_data, look_back)
 
@@ -79,7 +79,10 @@ def execute_lstm(raw_data, data, forecast, hyperparameters):
     for i in range(len(future_data)):
         with torch.no_grad():
             model.eval()
-            prediction = model(torch.FloatTensor(last_data[-look_back:].reshape(1, look_back, -2)))
+            last_elements = last_data[-look_back:]
+            sliced_last_elements = [sublist[1:] for sublist in last_elements]
+            sliced_last_elements = np.array(sliced_last_elements)
+            prediction = model(torch.FloatTensor(sliced_last_elements.reshape(1, look_back, -2)))
             forecast_values.append(prediction.item())
             scaled_forecast_data[i - len(future_data)][0] = prediction.item()
             # remove NaN values to perform proper scaling
